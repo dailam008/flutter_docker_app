@@ -1,14 +1,15 @@
-# Gunakan image web server ringan
+# Gunakan image dasar Flutter
+FROM cirrusci/flutter:latest as build
+
+WORKDIR /app
+COPY . .
+
+# Build Flutter Web
+RUN flutter build web
+
+# Gunakan Nginx untuk serve hasil build
 FROM nginx:alpine
+COPY --from=build /app/build/web /usr/share/nginx/html
 
-# Hapus default file nginx dan ganti dengan hasil build Flutter
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copy hasil build Flutter Web ke direktori nginx
-COPY build/web /usr/share/nginx/html
-
-# Expose port 80 agar bisa diakses dari luar
 EXPOSE 80
-
-# Jalankan nginx
 CMD ["nginx", "-g", "daemon off;"]

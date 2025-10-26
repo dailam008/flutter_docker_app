@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'flutter_docker_app'
-        DOCKER_TAG = 'latest'
+        DOCKER_HUB_REPO = "username_dockerhub_kamu/flutter_docker_app"
+        DOCKER_CREDENTIALS_ID = "dockerhub_credentials"
+        FLUTTER_APP_PORT = "8085"
     }
 
     stages {
@@ -15,23 +16,40 @@ pipeline {
 
         stage('Build Flutter Web') {
             steps {
-                sh 'flutter clean'
+                echo 'Building Flutter web project...'
                 sh 'flutter build web'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
+                        def app = docker.build("${DOCKER_HUB_REPO}:latest")
+                        app.push()
+                    }
+                }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Run Container') {
             steps {
-                sh 'docker stop flutter_docker_app || true'
-                sh 'docker rm flutter_docker_app || true'
-                sh 'docker run -d -p 8085:80 --name flutter_docker_app ${DOCKER_IMAGE}:${DOCKER_TAG}'
+                echo 'Running Docker container on port 8085...'
+                sh '''
+                docker stop flutter_web_app || true
+                docker rm flutter_web_app || true
+                docker run -d -p ${FLUTTER_APP_PORT}:80 --name flutter_web_app ${DOCKER_HUB_REPO}:latest
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build and deployment successful!"
+        }
+        failure {
+            echo "❌ Build or deployment failed!"
         }
     }
 }
