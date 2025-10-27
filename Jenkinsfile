@@ -17,7 +17,7 @@ pipeline {
         stage('Build Flutter Web') {
             steps {
                 echo 'Building Flutter web project...'
-                sh 'flutter build web'
+                bat 'flutter build web'
             }
         }
 
@@ -35,10 +35,10 @@ pipeline {
         stage('Run Container') {
             steps {
                 echo 'Running Docker container on port 8085...'
-                sh '''
-                docker stop flutter_web_app || true
-                docker rm flutter_web_app || true
-                docker run -d -p ${FLUTTER_APP_PORT}:80 --name flutter_web_app ${DOCKER_HUB_REPO}:latest
+                bat '''
+                docker stop flutter_web_app || exit 0
+                docker rm flutter_web_app || exit 0
+                docker run -d -p %FLUTTER_APP_PORT%:80 --name flutter_web_app %DOCKER_HUB_REPO%:latest
                 '''
             }
         }
