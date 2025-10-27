@@ -2,23 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_REPO = "username_dockerhub_kamu/flutter_docker_app"
+        DOCKER_HUB_REPO = "dailam008/flutter_docker_app"
         DOCKER_CREDENTIALS_ID = "dockerhub_credentials"
         FLUTTER_APP_PORT = "8085"
-        PATH = "C:\\src\\flutter\\bin;${env.PATH}"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/dailam008/flutter_docker_app.git'
-            }
-        }
-
-        stage('Check Flutter Version') {
-            steps {
-                echo 'Checking Flutter installation...'
-                bat 'flutter --version'
             }
         }
 
@@ -31,11 +23,19 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        def app = docker.build("${DOCKER_HUB_REPO}:latest")
-                        app.push()
-                    }
+                echo 'Building Docker image...'
+                bat 'docker build -t %DOCKER_HUB_REPO%:latest .'
+            }
+        }
+
+        stage('Login & Push to Docker Hub') {
+            steps {
+                echo 'Logging in and pushing Docker image...'
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", passwordVariable: 'DOCKERHUB_PASS', usernameVariable: 'DOCKERHUB_USER')]) {
+                    bat '''
+                    docker login -u %DOCKERHUB_USER% -p %DOCKERHUB_PASS%
+                    docker push %DOCKER_HUB_REPO%:latest
+                    '''
                 }
             }
         }
