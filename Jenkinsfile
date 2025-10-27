@@ -5,12 +5,20 @@ pipeline {
         DOCKER_HUB_REPO = "username_dockerhub_kamu/flutter_docker_app"
         DOCKER_CREDENTIALS_ID = "dockerhub_credentials"
         FLUTTER_APP_PORT = "8085"
+        PATH = "C:\\src\\flutter\\bin;${env.PATH}"
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/dailam008/flutter_docker_app.git'
+            }
+        }
+
+        stage('Check Flutter Version') {
+            steps {
+                echo 'Checking Flutter installation...'
+                bat 'flutter --version'
             }
         }
 
